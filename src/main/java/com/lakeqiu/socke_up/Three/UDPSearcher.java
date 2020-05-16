@@ -3,53 +3,50 @@ package com.lakeqiu.socke_up.Three;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.SocketException;
 
 /**
- * UDP 搜索者，用于搜索服务支持方
+ * UDP 搜索者，用于搜索服务支持方，即先发送后接收
  * @author lakeqiu
  */
 public class UDPSearcher {
     public static void main(String[] args) throws IOException {
-        System.out.println("UDPSearcher 启动");
+        System.out.println("UDPSearcher启动了");
 
-        // 1、作为接收者，指定一个端口作为用于数据接收
-        DatagramSocket ds = new DatagramSocket(8090);
+        // 1、作为搜索方，不需要绑定监听端口，
+        // 发送端口由系统分配即可
+        DatagramSocket ds = new DatagramSocket();
 
-        // 2、构建接收实体
+        // 2、构建发送信息
+        String sendMsg = "Hello World";
+        byte[] sendMsgBytes = sendMsg.getBytes();
+        DatagramPacket sendPacket = new DatagramPacket(sendMsgBytes, sendMsgBytes.length);
+        // 指定接收地址与端口（本机8090）
+        sendPacket.setAddress(InetAddress.getLocalHost());
+        System.out.println("向提供者发送了：" + sendMsg);
+        sendPacket.setPort(8090);
+
+        // 3、发送
+        ds.send(sendPacket);
+
+        // 4、接收回复信息
+        // 构建接收实体
         byte[] buf = new byte[1024];
         DatagramPacket receiverPack = new DatagramPacket(buf, buf.length);
-
-        // 3、监听端口，接收数据
+        // 接收
         ds.receive(receiverPack);
 
-        // 4、接收到数据了，获取数据信息
-        // 发送者的ip
+        // 5、解析并打印
         String ip = receiverPack.getAddress().getHostAddress();
-        // 发送者端口
         int port = receiverPack.getPort();
-        // 接收到的数据长度
         int dataLen = receiverPack.getLength();
-        // 接收到的数据
         String data = new String(receiverPack.getData(), 0, dataLen);
-        // 打印信息
-        System.out.println("UDPProvider ip:" + port + " port:" + port
+        System.out.println("UDPSearcher ip:" + ip + " port:" + port
                 + " dataLen:" + dataLen + "\tdata:" + data);
 
 
-        // 5、回复发送者信息
-        // 构建回复信息
-        String returnMsg = "接收到的数据长度为：" + dataLen;
-        // 构建容器并放入信息
-        byte[] returnMsgBytes = returnMsg.getBytes();
-        // 根据发送者信息构建回复实体
-        DatagramPacket returnPack = new DatagramPacket(returnMsgBytes, returnMsgBytes.length,
-                receiverPack.getAddress(), receiverPack.getPort());
-        // 回复
-        ds.send(receiverPack);
-
-        System.out.println("回复数据成功");
-        // 关闭资源
+        System.out.println("UDPSearcher结束了");
         ds.close();
     }
 }
